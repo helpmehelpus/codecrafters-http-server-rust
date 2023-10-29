@@ -1,6 +1,23 @@
 // Uncomment this block to pass the first stage
-use std::net::TcpListener;
-use std::io::Write;
+use std::net::{TcpListener, TcpStream};
+use std::io::{BufRead, BufReader, Write};
+
+fn handle_connection(mut stream: TcpStream) {
+    let buf_reader = BufReader::new(&mut stream);
+    let request_line = buf_reader.lines().next().unwrap().unwrap();
+    let chunks: Vec<&str> = request_line.split_whitespace().collect();
+    let path = chunks[1];
+
+    if path == "/" {
+        stream
+            .write("HTTP/1.1 200 OK\r\n\r\n".as_bytes())
+            .expect("Unable to write to stream");
+    } else {
+        stream
+            .write("HTTP/1.1 404 Not Found\r\n\r\n".as_bytes())
+            .expect("Unable to write to stream");
+    }
+}
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -13,9 +30,7 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(mut _stream) => {
-                _stream
-                    .write("HTTP/1.1 200 OK\r\n\r\n".as_bytes())
-                    .expect("Unable to write to stream");
+                handle_connection(_stream);
                 println!("accepted new connection");
             }
             Err(e) => {
