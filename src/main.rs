@@ -13,10 +13,10 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(mut _stream) => {
-                println!("accepted new connection");
                 _stream
                     .write("HTTP/1.1 200 OK\r\n\r\n".as_bytes())
                     .expect("Unable to write to stream");
+                println!("accepted new connection");
             }
             Err(e) => {
                 println!("error: {}", e);
