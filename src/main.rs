@@ -12,6 +12,12 @@ fn handle_connection(mut stream: TcpStream) {
         stream
             .write("HTTP/1.1 200 OK\r\n\r\n".as_bytes())
             .expect("Unable to write to stream");
+    } else if path.starts_with("/echo/") {
+        let res_text = path.strip_prefix("/echo/").expect("expected string as input");
+        let out = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", res_text.as_bytes().len(), res_text);
+        stream
+            .write(out.as_bytes())
+            .expect("Unable to write to stream");
     } else {
         stream
             .write("HTTP/1.1 404 Not Found\r\n\r\n".as_bytes())
