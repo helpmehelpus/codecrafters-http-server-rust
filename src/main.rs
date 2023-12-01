@@ -4,13 +4,25 @@ use std::io::{BufRead, BufReader, Write};
 
 fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
-    let request_line = buf_reader.lines().next().unwrap().unwrap();
+    let mut request = buf_reader.lines();
+    let request_line = request.next().unwrap().unwrap();
     let chunks: Vec<&str> = request_line.split_whitespace().collect();
     let path = chunks[1];
 
     if path == "/" {
         stream
             .write("HTTP/1.1 200 OK\r\n\r\n".as_bytes())
+            .expect("Unable to write to stream");
+    } else if path == "/user-agent" {
+        let user_agent_line = request
+            .map(|l| l.unwrap())
+            .filter(|l| l.starts_with("User-Agent"))
+            .next()
+            .unwrap();
+        let user_agent = user_agent_line.strip_prefix("User-Agent:").unwrap().trim();
+        let out = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}\r\n\r\n", user_agent.as_bytes().len(), user_agent);
+        stream
+            .write(out.as_bytes())
             .expect("Unable to write to stream");
     } else if path.starts_with("/echo/") {
         let res_text = path.strip_prefix("/echo/").expect("expected string as input");
