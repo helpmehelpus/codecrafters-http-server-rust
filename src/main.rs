@@ -1,6 +1,9 @@
 // Uncomment this block to pass the first stage
 use std::net::{TcpListener, TcpStream};
 use std::io::{BufRead, BufReader, Write};
+use http_server_starter_rust::ThreadPool;
+
+const THREAD_POOL_SIZE: usize = 4;
 
 fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
@@ -44,11 +47,14 @@ fn main() {
     // Uncomment this block to pass the first stage
     //
     let listener = TcpListener::bind("127.0.0.1:4221").unwrap();
+    let pool = ThreadPool::new(THREAD_POOL_SIZE);
 
     for stream in listener.incoming() {
         match stream {
             Ok(mut _stream) => {
-                handle_connection(_stream);
+                pool.execute(|| {
+                    handle_connection(_stream);
+                });
                 println!("accepted new connection");
             }
             Err(e) => {
@@ -56,4 +62,6 @@ fn main() {
             }
         }
     }
+
+    // ThreadPool goes out of scope here, so drop is called for it
 }
